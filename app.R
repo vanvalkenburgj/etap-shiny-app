@@ -216,7 +216,7 @@ div(class = "card",
 
 div(class = "card",
     div(class = "section-lbl", style = "margin-bottom: 12px;", "Session info"),
-    textInput("site_name",    "Site name",        placeholder = "e.g. Peachtree Creek"),
+    textInput("site_name",    "Site name",        placeholder = "e.g. Freedom park"),
     dateInput("cleanup_date", "Cleanup date",     value = Sys.Date()),
     textInput("volunteer_id", "Volunteer ID / name"),
     selectInput("site_type",  "Site type",
