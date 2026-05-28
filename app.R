@@ -1,4 +1,5 @@
 library(shiny)
+source("storage.R")
 
 #ETAP item definitions
 
@@ -268,6 +269,8 @@ server <- function(input, output, session) {
   
   #On submit: show confirmation
   observeEvent(input$submit, {
+    save_entry(input, all_input_ids, total())
+    
     output$confirmation <- renderUI({
       div(class = "card", style = "background: #e8f5f0;",
           h4(paste0("\u2713 Entry logged \u2014 ", total(), " items")),
