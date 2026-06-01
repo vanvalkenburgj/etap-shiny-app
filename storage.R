@@ -21,6 +21,8 @@ save_entry <- function(input, all_input_ids, total) {
     volunteer_id = input$volunteer_id,
     site_type    = input$site_type,
     condition    = input$condition,
+    lat          = ifelse(is.null(input$gps_lat), NA, input$gps_lat),
+    lng          = ifelse(is.null(input$gps_lng), NA, input$gps_lng),
     total_items  = total,
     t(item_vals),
     stringsAsFactors = FALSE

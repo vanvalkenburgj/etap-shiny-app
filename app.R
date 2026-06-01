@@ -1,5 +1,7 @@
 library(shiny)
+library(shinyjs)
 source("storage.R")
+source("gps.R")
 
 #ETAP item definitions
 
@@ -159,6 +161,8 @@ group_card <- function(group_id) {
 ui <- fluidPage(
   
   tags$head(
+    useShinyjs(),
+    gps_script,
     tags$meta(name = "viewport", content = "width=device-width, initial-scale=1"),
     tags$style(HTML("
       body         { max-width: 500px; margin: 0 auto; padding: 12px;
@@ -239,17 +243,21 @@ div(class = "total-box",
     strong(textOutput("grand_total", inline = TRUE))
 ),
 
-#Submit
-
-actionButton("submit", "Submit entry", class = "submit-btn"),
+#Submit with new GPS status
+gps_status_ui,
+actionButton("submit", "Submit entry", class = "submit-btn",
+             onclick = "captureGPS()"),
 
 #Confirmation
 
 uiOutput("confirmation")
 
+)
+
 #Server
 
 server <- function(input, output, session) {
+  gps_server(input, output)
   
   #Build a flat list of all input IDs across every group
   all_input_ids <- unlist(lapply(group_ids, function(gid) {
@@ -295,6 +303,9 @@ server <- function(input, output, session) {
     output$confirmation <- renderUI({ NULL })
   })
 }
+
+#GPS Status UI
+gps_status_ui <- uiOutput("gps_status_display")
 
 
 shinyApp(ui, server)
