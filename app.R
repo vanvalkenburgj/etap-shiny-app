@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyjs)
 source("storage.R")
+drive_auth(email = "etapshinyapp@gmail.com")
 source("gps.R")
 
 #ETAP item definitions

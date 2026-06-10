@@ -1,9 +1,26 @@
-#Data Storage
-#Handles reading and writing ETAP entries to local CSV file
+#storage.R
+#Handles reading and writing ETAP entries to Google Drive CSV.
+#This file is sourced by app.R at startup.
 
-data_file <- file.path(getwd(), "etap_entry.csv")
+library(googledrive)
 
-#save_entry: appends one row to the CSV
+#Configuration
+
+drive_folder_id <- "1AKb1lDhQn93f6IvCWExFZW1svz1jjFdr"
+data_file_name  <- "etap_entries.csv"
+local_temp_file <- tempfile(fileext = ".csv")
+
+#get_drive_file: finds the CSV in Drive, returns its ID or NULL
+
+get_drive_file <- function() {
+  results <- drive_ls(
+    path = as_id(drive_folder_id),
+    pattern = data_file_name
+  )
+  if (nrow(results) > 0) results$id[1] else NULL
+}
+
+#save_entry: appends one row to the Drive CSV
 
 save_entry <- function(input, all_input_ids, total) {
   
@@ -28,23 +45,35 @@ save_entry <- function(input, all_input_ids, total) {
     stringsAsFactors = FALSE
   )
   
-  # Append to CSV if it exists, create it if it doesn't
-  if (file.exists(data_file)) {
-    write.table(new_row, data_file,
-                sep       = ",",
-                col.names = FALSE,
-                row.names = FALSE,
-                append    = TRUE)
+  #Check if the CSV already exists in Drive
+  file_id <- get_drive_file()
+  
+  if (!is.null(file_id)) {
+    #Download existing CSV, append new row, re-upload
+    drive_download(as_id(file_id), path = local_temp_file, overwrite = TRUE)
+    existing <- read.csv(local_temp_file, stringsAsFactors = FALSE)
+    updated  <- rbind(existing, new_row)
+    write.csv(updated, local_temp_file, row.names = FALSE)
+    drive_update(as_id(file_id), media = local_temp_file)
   } else {
-    write.csv(new_row, data_file, row.names = FALSE)
+    #No CSV yet — create it fresh in the Drive folder
+    write.csv(new_row, local_temp_file, row.names = FALSE)
+    drive_upload(
+      media  = local_temp_file,
+      path   = as_id(drive_folder_id),
+      name   = data_file_name,
+      type   = "text/csv"
+    )
   }
 }
 
-#load_entries: reads all saved entries back as a dataframe
+#load_entries: reads all saved entries from Drive
 
 load_entries <- function() {
-  if (file.exists(data_file)) {
-    read.csv(data_file, stringsAsFactors = FALSE)
+  file_id <- get_drive_file()
+  if (!is.null(file_id)) {
+    drive_download(as_id(file_id), path = local_temp_file, overwrite = TRUE)
+    read.csv(local_temp_file, stringsAsFactors = FALSE)
   } else {
     NULL
   }
