@@ -3,6 +3,7 @@ library(shinyjs)
 source("storage.R")
 drive_auth(email = "etapshinyapp@gmail.com")
 source("gps.R")
+source("summary.R")
 
 #ETAP item definitions
 
@@ -259,6 +260,7 @@ uiOutput("confirmation")
 
 server <- function(input, output, session) {
   gps_server(input, output)
+  summary <- summary_server(input, output, session, all_input_ids, groups, group_ids)
   
   #Build a flat list of all input IDs across every group
   all_input_ids <- unlist(lapply(group_ids, function(gid) {
@@ -279,16 +281,10 @@ server <- function(input, output, session) {
   #On submit: show confirmation
   observeEvent(input$submit, {
     save_entry(input, all_input_ids, total())
+    summary$record_entry(input, all_input_ids, total())
     
     output$confirmation <- renderUI({
-      div(class = "card", style = "background: #e8f5f0;",
-          h4(paste0("\u2713 Entry logged \u2014 ", total(), " items")),
-          p(paste("Site:", input$site_name)),
-          p(paste("Date:", format(input$cleanup_date, "%B %d, %Y"))),
-          p(paste("Condition:", input$condition)),
-          actionButton("reset", "Log another entry",
-                       style = "margin-top: 8px;")
-      )
+      summary$render_summary(input)
     })
   })
   
