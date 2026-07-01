@@ -38,8 +38,8 @@ gps_script <- tags$script(HTML("
 
 gps_status_ui <- uiOutput("gps_status_display")
 
-# ── GPS status server ─────────────────────────────────────────────────────────
-# Call gps_server(input, output) inside your server function in app.R
+#GPS status for server
+#Call gps_server(input, output) inside your server function in app.R
 
 gps_server <- function(input, output) {
   output$gps_status_display <- renderUI({

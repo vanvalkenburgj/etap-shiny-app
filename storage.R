@@ -3,16 +3,16 @@
 #This file is sourced by app.R at startup.
 
 library(googledrive)
+googledrive::drive_deauth()
 
 #Configuration
 
 drive_folder_id <- "1AKb1lDhQn93f6IvCWExFZW1svz1jjFdr"
-data_file_name  <- "etap_entries.csv"
 local_temp_file <- tempfile(fileext = ".csv")
 
 #get_drive_file: finds the CSV in Drive, returns its ID or NULL
 
-get_drive_file <- function() {
+get_drive_file <- function(data_file_name) {
   results <- drive_ls(
     path = as_id(drive_folder_id),
     pattern = data_file_name
@@ -23,6 +23,10 @@ get_drive_file <- function() {
 #save_entry: appends one row to the Drive CSV
 
 save_entry <- function(input, all_input_ids, total) {
+  event_code     <- ifelse(is.null(input$event_code) || input$event_code == "",
+                           "no-event", input$event_code)
+  data_file_name <- paste0("etap_", event_code, ".csv")
+  message("Saving to file: ", data_file_name)
   
   #Collect all item counts into a named vector
   item_vals <- sapply(all_input_ids, function(id) {
@@ -46,7 +50,7 @@ save_entry <- function(input, all_input_ids, total) {
   )
   
   #Check if the CSV already exists in Drive
-  file_id <- get_drive_file()
+  file_id <- get_drive_file(data_file_name)
   
   if (!is.null(file_id)) {
     #Download existing CSV, append new row, re-upload

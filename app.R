@@ -1,9 +1,11 @@
 library(shiny)
 library(shinyjs)
+library(leaflet)
 source("storage.R")
 source("gps.R")
 source("summary.R")
-drive_auth(path = "service-account.json")
+source("dashboard.R")
+drive_auth(cache = ".secrets", email = "etapshinyapp@gmail.com")
 
 #ETAP item definitions
 
@@ -194,7 +196,6 @@ ui <- fluidPage(
       input[type=number] { width: 70px; text-align: center; }
       .form-group  { margin-bottom: 10px; }
     ")),
-    #Collapse / expand toggle JS
     tags$script(HTML("
       function toggleGroup(id) {
         var body = document.getElementById(id);
@@ -208,52 +209,61 @@ ui <- fluidPage(
         }
       }
     "))
-  ),
+  ), # closes tags$head()
   
-#Header
-
-div(class = "card",
-    h4("ETAP Field Entry"),
-    p("Log trash items by material group below.",
-      style = "color: black; font-size: 13px; margin: 0;")
-),
-
-#Session Metadata
-
-div(class = "card",
-    div(class = "section-lbl", style = "margin-bottom: 12px;", "Session info"),
-    textInput("site_name",    "Site name",        placeholder = "e.g. Freedom park"),
-    dateInput("cleanup_date", "Cleanup date",     value = Sys.Date()),
-    textInput("volunteer_id", "Volunteer ID / name"),
-    selectInput("site_type",  "Site type",
-                choices = c("Terrestrial", "Aquatic edge", "In-water")),
+  tabsetPanel(
     
-    #Condition: official ETAP uses only two options
-    div(class = "section-lbl", style = "margin: 10px 0 6px;", "Item condition"),
-    selectInput("condition", label = NULL,
-                choices = c("Intact / Unfouled", "Degraded / Heavily Fouled"))
-),
-
-#Material group cards
-
-lapply(group_ids, group_card),
-
-#Running Total
-
-div(class = "total-box",
-    span("Total items logged"),
-    strong(textOutput("grand_total", inline = TRUE))
-),
-
-#Submit with new GPS status
-gps_status_ui,
-actionButton("submit", "Submit entry", class = "submit-btn",
-             onclick = "captureGPS()"),
-
-#Confirmation
-
-uiOutput("confirmation")
-
+    #Field Entry
+    tabPanel("Field Entry",
+             
+             div(style = "max-width: 500px; margin: 0 auto; padding: 12px;",
+                 
+                 #Header
+                 div(class = "card",
+                     h4("ETAP Field Entry"),
+                     p("Log trash items by material group below.",
+                       style = "color: black; font-size: 13px; margin: 0;")
+                 ),
+                 
+                 #Session metadata
+                 div(class = "card",
+                     div(class = "section-lbl", style = "margin-bottom: 12px;", "Session info"),
+                     textInput("site_name",    "Site name",    placeholder = "e.g. Freedom Park"),
+                     dateInput("cleanup_date", "Cleanup date", value = Sys.Date()),
+                     textInput("volunteer_id", "Volunteer ID / name"),
+                     textInput("event_code",   "Event code",   placeholder = "e.g. CREEK-2026-06-23"),
+                     selectInput("site_type",  "Site type",
+                                 choices = c("Terrestrial", "Aquatic edge", "In-water")),
+                     div(class = "section-lbl", style = "margin: 10px 0 6px;", "Item condition"),
+                     selectInput("condition", label = NULL,
+                                 choices = c("Intact / Unfouled", "Degraded / Heavily Fouled"))
+                 ),
+                 
+                 #Material group cards
+                 lapply(group_ids, group_card),
+                 
+                 #Running total
+                 div(class = "total-box",
+                     span("Total items logged"),
+                     strong(textOutput("grand_total", inline = TRUE))
+                 ),
+                 
+                 #GPS status and submit
+                 gps_status_ui,
+                 actionButton("submit", "Submit entry", class = "submit-btn",
+                              onclick = "captureGPS()"),
+                 
+                 #Confirmation / summary
+                 uiOutput("confirmation")
+                 
+             )
+    ),
+    
+    #Event Summary
+    dashboard_ui
+    
+  )
+  
 )
 
 #Server
