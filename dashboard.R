@@ -17,10 +17,20 @@ dashboard_ui <- tabPanel("Event Summary",
                                  uiOutput("event_selector"),
                                  actionButton("refresh_dashboard", "Refresh",
                                               style = "margin-top: 10px; padding: 8px 20px;
-                            background: #1D9E75; color: white;
-                            border: none; border-radius: 6px;
-                            font-size: 13px; cursor: pointer;")
-                             ),
+                      background: #1D9E75; color: white;
+                      border: none; border-radius: 6px;
+                      font-size: 13px; cursor: pointer;"),
+                                 div(style = "display: flex; gap: 10px; margin-top: 10px;",
+                                     downloadButton("download_map", "Download Map",
+                                                    style = "flex: 1; background: white;
+                          border: 1.5px solid #1D9E75; color: #1D9E75;
+                          border-radius: 6px; font-size: 13px;"),
+                                     downloadButton("download_csv", "Download CSV",
+                                                    style = "flex: 1; background: white;
+                          border: 1.5px solid #1D9E75; color: #1D9E75;
+                          border-radius: 6px; font-size: 13px;")
+                                 )
+                             )
                              
                              #Event stats
                              uiOutput("dashboard_stats"),
@@ -220,5 +230,35 @@ dashboard_server <- function(input, output, groups, group_ids) {
         })
     )
   })
+  # Download map as HTML
+  output$download_map <- downloadHandler(
+    filename = function() paste0("etap_map_", input$selected_event, ".html"),
+    content  = function(file) {
+      df     <- event_data()
+      gps_df <- df[!is.na(df$lat) & !is.na(df$lng), ]
+      map    <- leaflet(gps_df) %>%
+        addTiles() %>%
+        addCircleMarkers(
+          lng    = ~lng,
+          lat    = ~lat,
+          radius = 6,
+          color  = "#1D9E75",
+          fillOpacity = 0.8,
+          popup  = ~paste0("<b>", site_name, "</b><br>",
+                           volunteer_id, "<br>",
+                           total_items, " items<br>",
+                           condition)
+        )
+      htmlwidgets::saveWidget(map, file, selfcontained = TRUE)
+    }
+  )
+  
+  # Download event CSV
+  output$download_csv <- downloadHandler(
+    filename = function() paste0("etap_", input$selected_event, ".csv"),
+    content  = function(file) {
+      write.csv(event_data(), file, row.names = FALSE)
+    }
+  )
 }
 

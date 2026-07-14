@@ -277,6 +277,9 @@ server <- function(input, output, session) {
     paste0(gid, "_", seq_along(groups[[gid]]$items))
   }))
   
+  gps_server(input, output)
+  dashboard_server(input, output, groups, group_ids)
+  summary <- summary_server(input, output, session, all_input_ids, groups, group_ids)
   #Reactive: sum all item counts
   total <- reactive({
     vals <- sapply(all_input_ids, function(id) {
